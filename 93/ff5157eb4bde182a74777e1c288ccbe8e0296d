@@ -1,0 +1,45 @@
+scripts/check_distribution.py
+  s_b51959d3fcd710::t_6370ea995fee08 1-63
+src/onerobotics_a1_mjlab/reach/mdp/actions.py
+  s_b51959d3fcd710::t_1b038e86f67343 1-68
+LICENSES/CC-BY-4.0.txt
+  s_b51959d3fcd710::t_21b7fb09a650af 1-395
+LICENSES/IsaacLab-BSD-3-Clause.txt
+  s_b51959d3fcd710::t_14dfc45194b4da 1-30
+uv.lock
+  s_b51959d3fcd710::t_94d978c2354664 1-3357
+README.md
+  s_b51959d3fcd710::t_9c6875572fd51d 39
+  s_b51959d3fcd710::t_33cf6991b6b09d 36-38
+  s_b51959d3fcd710::t_11c78d0ed10326 40-42
+pyproject.toml
+  s_b51959d3fcd710::t_9c6875572fd51d 49
+  s_b51959d3fcd710::t_8b466dc5f1186f 46-48
+  s_b51959d3fcd710::t_2d2bf92ac8ffd7 50-52
+src/onerobotics_a1_mjlab/reach/mdp/rewards.py
+  s_b51959d3fcd710::t_55a7fe495f3ec8 1-43
+src/onerobotics_a1_mjlab/reach/mdp/observations.py
+  s_b51959d3fcd710::t_651f08cdd5cb9c 1-38
+tests/conftest.py
+  s_b51959d3fcd710::t_9954f06106a2d8 1-21
+tests/test_a1_model_fidelity.py
+  s_b51959d3fcd710::t_45e9e89d010151 1-39
+LICENSE
+  s_b51959d3fcd710::t_fc5a46798e814e 1-202
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "93ff5157eb4bde182a74777e1c288ccbe8e0296d",
+  "prompts": {},
+  "sessions": {
+    "s_b51959d3fcd710": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00dbf-4de7-79c0-825f-603f1d50c385",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": null
+    }
+  }
+}
