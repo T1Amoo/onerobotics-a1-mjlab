@@ -1,0 +1,79 @@
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
+
+[project]
+name = "onerobotics-a1-mjlab"
+version = "0.1.0"
+description = "Official OneRobotics A1 integration for mjlab"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.10,<3.14"
+license = "Apache-2.0"
+license-files = [
+  "LICENSE",
+  "LICENSES/*",
+  "ASSET_LICENSE.md",
+  "THIRD_PARTY_NOTICES.md",
+]
+authors = [
+  {name = "OneRobotics"},
+]
+keywords = [
+  "a1",
+  "mjlab",
+  "mujoco",
+  "onerobotics",
+  "reinforcement-learning",
+  "robot-arm",
+  "robotics",
+  "rsl-rl",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = [
+  "mjlab>=1.6.0,<2.0.0",
+]
+
+[project.urls]
+Homepage = "http://www.onerobot.com/"
+Repository = "https://github.com/T1Amoo/onerobotics-a1-mjlab"
+"Source model" = "https://github.com/katazen/onerobot_h1"
+
+[project.entry-points."mjlab.tasks"]
+onerobotics_a1_mjlab = "onerobotics_a1_mjlab"
+
+[dependency-groups]
+dev = [
+  "pillow>=12.0.0",
+  "pyright>=1.1.408",
+  "pytest>=9.0.3",
+  "ruff>=0.16.1",
+]
+
+[tool.ruff]
+indent-width = 2
+line-length = 88
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+
+[tool.pyright]
+include = ["src", "tests", "scripts"]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

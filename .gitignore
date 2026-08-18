@@ -1,0 +1,35 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+
+# Environments and builds
+.venv/
+build/
+dist/
+wheels/
+
+# Training and evaluation products
+logs/
+checkpoints/
+wandb/
+*.pt
+*.onnx
+*.npz
+*.log
+MUJOCO_LOG.TXT
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*~
