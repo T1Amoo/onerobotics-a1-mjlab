@@ -43,6 +43,7 @@ class RateLimitedJointPositionAction(JointPositionAction):
     return self._limited_target
 
   def process_actions(self, actions: torch.Tensor) -> None:
+    """Scale and offset raw actions, then slew-limit the position targets."""
     super().process_actions(actions)
     target_delta = torch.clamp(
       self._processed_actions - self._limited_target,
@@ -53,6 +54,7 @@ class RateLimitedJointPositionAction(JointPositionAction):
     self._processed_actions = self._limited_target
 
   def reset(self, env_ids: torch.Tensor | slice | None = None) -> None:
+    """Reset selected raw actions and limited targets to the home offset."""
     super().reset(env_ids)
     self._limited_target[env_ids] = self._initial_target[env_ids]
 

@@ -15,6 +15,7 @@ env:
 
 jobs:
   quality-test-package:
+    name: Python 3.13 quality, tests, and package
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -52,8 +53,39 @@ jobs:
         shell: bash
         run: |
           project_dir="$PWD"
+          wheels=("$project_dir"/dist/*.whl)
+          test "${#wheels[@]}" -eq 1
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"
           uv run --isolated --no-project \
-            --with "$project_dir/dist/onerobotics_a1_mjlab-0.1.0-py3-none-any.whl" \
+            --with "${wheels[0]}" \
             python "$project_dir/scripts/isolated_smoke.py" --workspace "$project_dir"
+
+  python-compatibility:
+    name: Python ${{ matrix.python-version }} compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+          version: "0.12.1"
+
+      - name: Install from the frozen lockfile
+        run: uv sync --frozen --python "${{ matrix.python-version }}"
+
+      - name: Import, model, registration, and CPU smoke
+        run: |
+          uv run --python "${{ matrix.python-version }}" pytest -q \
+            tests/test_a1_model.py::test_mjcf_exists_loads_and_compiles \
+            tests/test_a1_reach_env.py::test_task_registration_and_configs \
+            tests/test_a1_reach_env.py::test_reach_env_reset_and_zero_random_action_smoke

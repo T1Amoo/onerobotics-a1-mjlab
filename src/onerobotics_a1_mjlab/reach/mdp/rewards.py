@@ -14,14 +14,14 @@ if TYPE_CHECKING:
 
 
 def position_error(env: ManagerBasedRlEnv, command_name: str) -> torch.Tensor:
-  """Euclidean end-effector position error."""
+  """Return Euclidean end-effector position error in meters, shape ``(N,)``."""
   command = _get_command(env, command_name)
   current_pos_b, _ = command.current_pose_b()
   return torch.linalg.vector_norm(command.command[:, :3] - current_pos_b, dim=-1)
 
 
 def orientation_error(env: ManagerBasedRlEnv, command_name: str) -> torch.Tensor:
-  """Shortest end-effector orientation error in radians."""
+  """Return shortest orientation error in radians, shape ``(num_envs,)``."""
   command = _get_command(env, command_name)
   _, current_quat_b = command.current_pose_b()
   return quat_error_magnitude(command.command[:, 3:], current_quat_b)
@@ -36,7 +36,9 @@ def pose_tracking_tanh(
   """Multiplicative position-orientation tracking kernel.
 
   A high value requires both errors to be small; one objective cannot compensate
-  for an arbitrarily poor value of the other.
+  for an arbitrarily poor value of the other. ``pos_std`` is in meters and
+  ``ori_std`` is in radians. The output has shape ``(num_envs,)`` and lies in
+  ``[0, 1]``.
   """
   pos_score = 1.0 - torch.tanh(position_error(env, command_name) / pos_std)
   ori_score = 1.0 - torch.tanh(orientation_error(env, command_name) / ori_std)

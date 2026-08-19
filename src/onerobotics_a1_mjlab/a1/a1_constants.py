@@ -1,5 +1,6 @@
 """OneRobotics A1 model constants and mjlab entity configuration."""
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, cast
 
@@ -21,7 +22,11 @@ assert A1_XML.exists()
 
 
 def get_spec() -> Any:
-  """Load a fresh canonical OneRobotics A1 MjSpec."""
+  """Load a fresh ``MjSpec`` from the packaged canonical A1 MJCF.
+
+  The returned spec includes the source ``home`` keyframe. Callers may modify
+  it without affecting the packaged file or specs returned by later calls.
+  """
   return mj.MjSpec.from_file(str(A1_XML))
 
 
@@ -77,12 +82,16 @@ A1_ARTICULATION = EntityArticulationInfoCfg(
 
 
 def get_a1_robot_cfg() -> EntityCfg:
-  """Return a fresh OneRobotics A1 entity configuration."""
+  """Return an independent fixed-base A1 entity configuration.
+
+  The configuration preserves the MJCF actuators and contact parameters while
+  installing the canonical home state as mjlab's entity initial state.
+  """
   return EntityCfg(
-    init_state=HOME_KEYFRAME,
-    collisions=(FULL_COLLISION,),
+    init_state=deepcopy(HOME_KEYFRAME),
+    collisions=(deepcopy(FULL_COLLISION),),
     spec_fn=_get_entity_spec,
-    articulation=A1_ARTICULATION,
+    articulation=deepcopy(A1_ARTICULATION),
   )
 
 

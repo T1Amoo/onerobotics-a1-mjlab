@@ -15,7 +15,13 @@ EXPECTED_BODY_NAMES = [f"Link{i}" for i in range(1, 8)]
 
 def test_entity_cfg_and_entity_construct(a1_entity: Entity) -> None:
   cfg = get_a1_robot_cfg()
+  other_cfg = get_a1_robot_cfg()
   assert cfg.articulation is not None
+  assert other_cfg.articulation is not None
+  assert cfg.init_state is not other_cfg.init_state
+  assert cfg.init_state.joint_pos is not other_cfg.init_state.joint_pos
+  assert cfg.articulation is not other_cfg.articulation
+  assert cfg.collisions[0] is not other_cfg.collisions[0]
   assert a1_entity.num_actuators == 7
   assert a1_entity.num_joints == 7
   assert a1_entity.num_bodies == 8

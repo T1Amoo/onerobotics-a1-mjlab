@@ -1,8 +1,8 @@
 # OneRobotics A1 Asset License
 
 License declaration source: the controlling OneRobotics declaration in
-[`katazen/onerobot_h1`](https://github.com/katazen/onerobot_h1), dated
-2026-08-14.
+[`katazen/onerobot_h1` at commit `ca6d705f`](https://github.com/katazen/onerobot_h1/tree/ca6d705f37b0dc296bfe7f33f7c83d780c3d3a70),
+dated 2026-08-14.
 
 Copyright holder and licensor: **OneRobotics**
 
@@ -35,7 +35,8 @@ Suitable attribution for this repository:
 
 > OneRobotics A1 robot assets © 2026 OneRobotics, licensed under CC BY 4.0
 > (<https://creativecommons.org/licenses/by/4.0/>). Source:
-> <https://github.com/katazen/onerobot_h1>. Changes: the canonical right-arm
+> <https://github.com/katazen/onerobot_h1/tree/ca6d705f37b0dc296bfe7f33f7c83d780c3d3a70>.
+> Changes: the canonical right-arm
 > position MJCF was relocated, mesh paths were made package-relative, robot
 > geoms/model were given descriptive names, an mjlab fixed-base mocap wrapper
 > and a non-physical Link7 end-effector site were added, and non-robot demo

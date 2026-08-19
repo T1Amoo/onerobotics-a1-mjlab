@@ -1,12 +1,20 @@
 """Registration and runtime checks for the A1 reach environment."""
 
+from typing import Any, cast
+
+import mujoco
+import numpy as np
 import torch
 from mjlab.envs import ManagerBasedRlEnv
 from mjlab.tasks.registry import list_tasks, load_env_cfg, load_rl_cfg
 
 from onerobotics_a1_mjlab import TASK_ID
+from onerobotics_a1_mjlab.a1 import A1_END_EFFECTOR_SITE, get_spec
+from onerobotics_a1_mjlab.reach import a1_reach_env_cfg
 from onerobotics_a1_mjlab.reach.mdp.actions import RateLimitedJointPositionAction
 from onerobotics_a1_mjlab.reach.mdp.commands import ReachablePoseCommand
+
+mj = cast(Any, mujoco)
 
 
 def _assert_finite_observations(
@@ -32,6 +40,17 @@ def test_task_registration_and_configs() -> None:
   cfg = load_env_cfg(TASK_ID)
   play_cfg = load_env_cfg(TASK_ID, play=True)
   rl_cfg = load_rl_cfg(TASK_ID)
+  direct_cfg = a1_reach_env_cfg()
+  other_direct_cfg = a1_reach_env_cfg()
+  actor_joint_pos = direct_cfg.observations["actor"].terms["joint_pos"]
+  critic_joint_pos = direct_cfg.observations["critic"].terms["joint_pos"]
+  assert actor_joint_pos is not critic_joint_pos
+  assert (
+    actor_joint_pos.params["asset_cfg"]
+    is not (
+      other_direct_cfg.observations["actor"].terms["joint_pos"].params["asset_cfg"]
+    )
+  )
   assert cfg.episode_length_s == 8.0
   assert play_cfg.episode_length_s > 1.0e8
   assert rl_cfg.experiment_name == "onerobotics_a1_reach"
@@ -40,6 +59,10 @@ def test_task_registration_and_configs() -> None:
 def test_reach_env_reset_and_zero_random_action_smoke() -> None:
   env = _make_env()
   try:
+    timestep = env.sim.model.opt.timestep[:]
+    torch.testing.assert_close(timestep, torch.full_like(timestep, 1.0 / 60.0))
+    assert env.sim.model.opt.integrator == int(mj.mjtIntegrator.mjINT_IMPLICITFAST)
+
     observations, _ = env.reset()
     assert env.action_manager.total_action_dim == 7
     assert env.single_action_space.shape == (7,)
@@ -86,5 +109,30 @@ def test_sampled_targets_are_reachable_by_construction() -> None:
     assert torch.isfinite(command.target_joint_pos).all()
     quat_norm = torch.linalg.vector_norm(command.command[:, 3:], dim=-1)
     torch.testing.assert_close(quat_norm, torch.ones_like(quat_norm))
+
+    model = get_spec().compile()
+    data = mj.MjData(model)
+    joint_qpos_adr = np.asarray(
+      [model.jnt_qposadr[model.joint(f"joint{i}-a1_r").id] for i in range(1, 8)]
+    )
+    site_id = model.site(A1_END_EFFECTOR_SITE).id
+    center = 0.5 * (model.jnt_range[:, 0] + model.jnt_range[:, 1])
+    half_range = 0.4 * (model.jnt_range[:, 1] - model.jnt_range[:, 0])
+
+    sampled_joint_pos = command.target_joint_pos.cpu().numpy()
+    sampled_pose = command.command.cpu().numpy()
+    assert np.all(sampled_joint_pos >= center - half_range - 1e-6)
+    assert np.all(sampled_joint_pos <= center + half_range + 1e-6)
+
+    expected_quat = np.empty(4)
+    for joint_pos, target_pose in zip(sampled_joint_pos, sampled_pose, strict=True):
+      mj.mj_resetData(model, data)
+      data.qpos[joint_qpos_adr] = joint_pos
+      mj.mj_forward(model, data)
+      mj.mju_mat2Quat(expected_quat, data.site_xmat[site_id])
+      if np.dot(expected_quat, target_pose[3:]) < 0.0:
+        expected_quat *= -1.0
+      np.testing.assert_allclose(target_pose[:3], data.site_xpos[site_id], atol=1e-6)
+      np.testing.assert_allclose(target_pose[3:], expected_quat, atol=1e-6)
   finally:
     env.close()

@@ -1,4 +1,4 @@
-"""55-point fidelity regression against the canonical OneRobotics A1 source."""
+"""55-group fidelity regression against the canonical OneRobotics A1 source."""
 
 import json
 import os

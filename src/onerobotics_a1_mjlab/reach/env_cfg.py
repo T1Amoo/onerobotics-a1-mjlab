@@ -1,5 +1,7 @@
 """Manager-based environment configuration for OneRobotics A1 pose reaching."""
 
+from copy import deepcopy
+
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp as base_mdp
 from mjlab.managers.action_manager import ActionTermCfg
@@ -16,20 +18,27 @@ from mjlab.viewer import ViewerConfig
 from onerobotics_a1_mjlab.a1 import A1_ACTION_SCALE, get_a1_robot_cfg
 from onerobotics_a1_mjlab.reach import mdp
 
-_ROBOT_JOINTS = SceneEntityCfg("robot", joint_names=(r"joint[1-7]-a1_r",))
+
+def _robot_joints_cfg() -> SceneEntityCfg:
+  return SceneEntityCfg("robot", joint_names=(r"joint[1-7]-a1_r",))
 
 
 def a1_reach_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
-  """Create the OneRobotics A1 end-effector reach environment."""
+  """Create an independent OneRobotics A1 reach environment configuration.
+
+  Args:
+    play: Disable actor observation noise and replace the 8 s training timeout
+      with an effectively infinite timeout when ``True``.
+  """
   actor_terms = {
     "joint_pos": ObservationTermCfg(
       func=base_mdp.joint_pos_rel,
-      params={"asset_cfg": _ROBOT_JOINTS},
+      params={"asset_cfg": _robot_joints_cfg()},
       noise=Unoise(n_min=-0.01, n_max=0.01),
     ),
     "joint_vel": ObservationTermCfg(
       func=base_mdp.joint_vel_rel,
-      params={"asset_cfg": _ROBOT_JOINTS},
+      params={"asset_cfg": _robot_joints_cfg()},
       noise=Unoise(n_min=-0.05, n_max=0.05),
     ),
     "actions": ObservationTermCfg(func=base_mdp.last_action),
@@ -48,7 +57,7 @@ def a1_reach_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
       enable_corruption=not play,
     ),
     "critic": ObservationGroupCfg(
-      terms={**actor_terms},
+      terms=deepcopy(actor_terms),
       enable_corruption=False,
     ),
   }
@@ -57,7 +66,7 @@ def a1_reach_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     "joint_pos": mdp.RateLimitedJointPositionActionCfg(
       entity_name="robot",
       actuator_names=(r"joint[1-7]-a1_r",),
-      scale=A1_ACTION_SCALE,
+      scale=dict(A1_ACTION_SCALE),
       use_default_offset=True,
       preserve_order=True,
       max_target_delta=0.1,
@@ -108,12 +117,12 @@ def a1_reach_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     "joint_vel_l2": RewardTermCfg(
       func=base_mdp.joint_vel_l2,
       weight=-0.001,
-      params={"asset_cfg": _ROBOT_JOINTS},
+      params={"asset_cfg": _robot_joints_cfg()},
     ),
     "joint_pos_limits": RewardTermCfg(
       func=base_mdp.joint_pos_limits,
       weight=-1.0,
-      params={"asset_cfg": _ROBOT_JOINTS},
+      params={"asset_cfg": _robot_joints_cfg()},
     ),
   }
 
