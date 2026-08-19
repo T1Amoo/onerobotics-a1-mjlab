@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import tarfile
 import zipfile
+from email.parser import Parser
 from pathlib import Path
 
 MESH_FILES = {"base_link.STL", *{f"Link_R{i}.STL" for i in range(1, 8)}}
+EXPECTED_LICENSE_EXPRESSION = "Apache-2.0 AND CC-BY-4.0"
 
 
 def _archive_names(path: Path) -> set[str]:
@@ -22,6 +24,19 @@ def _archive_names(path: Path) -> set[str]:
 
 def _matching_suffixes(names: set[str], suffix: str) -> list[str]:
   return sorted(name for name in names if name.endswith(suffix))
+
+
+def _read_member(path: Path, suffix: str) -> str:
+  names = _archive_names(path)
+  matches = _matching_suffixes(names, suffix)
+  assert len(matches) == 1, f"Expected one {suffix} in {path}, found {matches}"
+  if path.suffix == ".whl":
+    with zipfile.ZipFile(path) as archive:
+      return archive.read(matches[0]).decode()
+  with tarfile.open(path, "r:gz") as archive:
+    member = archive.extractfile(matches[0])
+    assert member is not None
+    return member.read().decode()
 
 
 def check_archive(path: Path) -> None:
@@ -46,9 +61,28 @@ def check_archive(path: Path) -> None:
   ):
     assert _matching_suffixes(names, required), f"{required} missing from {path}"
 
-  forbidden = (".env", "/.venv/", "/wandb/", "/logs/", "__pycache__")
+  metadata_suffix = ".dist-info/METADATA" if path.suffix == ".whl" else "/PKG-INFO"
+  metadata = Parser().parsestr(_read_member(path, metadata_suffix))
+  assert metadata["License-Expression"] == EXPECTED_LICENSE_EXPRESSION
+
+  forbidden = (
+    ".env",
+    "/.venv/",
+    "/.pytest_cache/",
+    "/.ruff_cache/",
+    "/wandb/",
+    "/logs/",
+    "/checkpoints/",
+    "MUJOCO_LOG.TXT",
+    "__pycache__",
+  )
   assert not [name for name in names if any(item in name for item in forbidden)]
-  print(f"PASS {path.name}: {len(names)} files, 1 MJCF, 8 STL, legal files present")
+  if path.suffix == ".whl":
+    assert not [name for name in names if "/tests/" in f"/{name}"]
+  print(
+    f"PASS {path.name}: {len(names)} files, 1 MJCF, 8 STL, legal files and "
+    f"{EXPECTED_LICENSE_EXPRESSION} metadata present"
+  )
 
 
 def main() -> None:

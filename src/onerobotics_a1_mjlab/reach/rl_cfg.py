@@ -4,7 +4,7 @@ from mjlab.rl import RslRlModelCfg, RslRlOnPolicyRunnerCfg, RslRlPpoAlgorithmCfg
 
 
 def a1_reach_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
-  """Return the public PPO baseline for the A1 reach task."""
+  """Return the public PPO baseline, without implying policy convergence."""
   return RslRlOnPolicyRunnerCfg(
     actor=RslRlModelCfg(
       hidden_dims=(128, 128),

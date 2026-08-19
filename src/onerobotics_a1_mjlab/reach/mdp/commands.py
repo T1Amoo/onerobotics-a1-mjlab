@@ -27,7 +27,14 @@ if TYPE_CHECKING:
 
 
 class ReachablePoseCommand(CommandTerm):
-  """Sample joint configurations and use native MuJoCo FK for pose targets."""
+  """Generate kinematically reachable base-frame pose targets with MuJoCo FK.
+
+  Each command is a ``(num_envs, 7)`` tensor ordered
+  ``(x, y, z, qw, qx, qy, qz)``, with position in meters and a scalar-first
+  quaternion. Native CPU MuJoCo forward kinematics runs only when commands are
+  resampled; per-step pose and reward calculations remain device-resident Torch
+  operations.
+  """
 
   cfg: ReachablePoseCommandCfg
 
@@ -85,10 +92,16 @@ class ReachablePoseCommand(CommandTerm):
 
   @property
   def command(self) -> torch.Tensor:
+    """Return target poses in base frame with shape ``(num_envs, 7)``."""
     return self.target_pose_b
 
   def current_pose_b(self) -> tuple[torch.Tensor, torch.Tensor]:
-    """Return the current end-effector pose in the robot base frame."""
+    """Return current base-frame position and scalar-first orientation.
+
+    Returns:
+      Position in meters with shape ``(num_envs, 3)`` and quaternion in
+      ``(w, x, y, z)`` order with shape ``(num_envs, 4)``.
+    """
     root_pos_w = self.robot.data.root_link_pos_w
     root_quat_w = self.robot.data.root_link_quat_w
     ee_pos_w = self.robot.data.site_pos_w[:, self._site_id]
@@ -137,9 +150,7 @@ class ReachablePoseCommand(CommandTerm):
     del env_ids
 
   def _debug_vis_impl(self, visualizer: DebugVisualizer) -> None:
-    current_pos_b, current_quat_b = self.current_pose_b()
     root_pos_w = self.robot.data.root_link_pos_w
-    root_quat_w = self.robot.data.root_link_quat_w
 
     # Fixed-base A1 uses identity base orientation in the canonical model. Use
     # current world-space EE data for the actual frame and translate FK targets
@@ -158,7 +169,7 @@ class ReachablePoseCommand(CommandTerm):
       visualizer.add_sphere(
         target_pos,
         0.015,
-        (1.0, 0.5, 0.0, 0.8),
+        self.cfg.viz.target_color,
         label=f"a1_goal_{env_id}",
       )
       visualizer.add_frame(
@@ -174,21 +185,29 @@ class ReachablePoseCommand(CommandTerm):
         label=f"a1_goal_frame_{env_id}",
       )
 
-    del current_pos_b, current_quat_b, root_quat_w
-
 
 @dataclass(kw_only=True)
 class ReachablePoseCommandCfg(CommandTermCfg):
-  """Configuration for native-MuJoCo reachable A1 pose commands."""
+  """Configuration for joint-sampled, native-MuJoCo A1 pose commands."""
 
   entity_name: str = "robot"
+  """Scene entity containing the A1 articulation."""
+
   site_name: str = A1_END_EFFECTOR_SITE
+  """End-effector site used for forward kinematics and tracking."""
+
   joint_names: tuple[str, ...] = (r"joint[1-7]-a1_r",)
+  """Joint names or expressions, resolved in model order."""
+
   joint_range_scale: float = 0.8
+  """Fraction of each joint range sampled symmetrically about its center."""
 
   @dataclass
   class VizCfg:
+    """Debug visualization settings."""
+
     target_color: tuple[float, float, float, float] = (1.0, 0.5, 0.0, 0.8)
+    """Target sphere RGBA color."""
 
   viz: VizCfg = field(default_factory=VizCfg)
 

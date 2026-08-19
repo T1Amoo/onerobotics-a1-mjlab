@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Official OneRobotics A1 integration for mjlab"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10,<3.14"
-license = "Apache-2.0"
+license = "Apache-2.0 AND CC-BY-4.0"
 license-files = [
   "LICENSE",
   "LICENSES/*",
@@ -55,7 +55,7 @@ onerobotics_a1_mjlab = "onerobotics_a1_mjlab"
 [dependency-groups]
 dev = [
   "pillow>=12.0.0",
-  "pyright>=1.1.408",
+  "pyright[nodejs]>=1.1.408",
   "pytest>=9.0.3",
   "ruff>=0.16.1",
 ]

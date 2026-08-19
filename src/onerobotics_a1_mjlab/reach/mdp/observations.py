@@ -23,12 +23,21 @@ def _get_command(env: ManagerBasedRlEnv, command_name: str) -> ReachablePoseComm
 
 
 def target_pose_b(env: ManagerBasedRlEnv, command_name: str) -> torch.Tensor:
-  """Commanded end-effector position and quaternion in the base frame."""
+  """Return base-frame target pose ``[x, y, z, qw, qx, qy, qz]``.
+
+  Position is in meters and the scalar-first quaternion has a non-negative
+  scalar component. The output shape is ``(num_envs, 7)``.
+  """
   return _get_command(env, command_name).command
 
 
 def ee_pose_error_b(env: ManagerBasedRlEnv, command_name: str) -> torch.Tensor:
-  """Position and unique quaternion error in the robot base frame."""
+  """Return base-frame pose error with shape ``(num_envs, 7)``.
+
+  The first three values are target-minus-current position in meters. The last
+  four are ``q_target * inverse(q_current)`` in scalar-first order, standardized
+  to a non-negative scalar component.
+  """
   command = _get_command(env, command_name)
   current_pos_b, current_quat_b = command.current_pose_b()
   position_error = command.command[:, :3] - current_pos_b
